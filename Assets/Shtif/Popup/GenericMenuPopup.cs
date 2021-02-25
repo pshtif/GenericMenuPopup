@@ -143,8 +143,8 @@ namespace Shtif
         private int _contentHeight;
         private bool _useScroll;
         
-        public int width = 300;
-        public int height = 300;
+        public int width = 200;
+        public int height = 200;
         public int maxHeight = 300;
         public bool resizeToContent = false;
         public bool showOnStatus = true;
@@ -189,7 +189,6 @@ namespace Shtif
             
             if (showTitle)
             {
-                Debug.Log("here");
                 DrawTitle(new Rect(p_rect.x, p_rect.y, p_rect.width, 24));
             }
 
@@ -274,6 +273,15 @@ namespace Shtif
         private void DrawNodeSearch(Rect p_rect)
         {
             List<MenuItemNode> search = _rootNode.Search(_search);
+            search.Sort((n1, n2) =>
+            {
+                string p1 = n1.parent.GetPath();
+                string p2 = n2.parent.GetPath();
+                if (p1 == p2)
+                    return n1.name.CompareTo(n2.name);
+
+                return p1.CompareTo(p2);
+            });
 
             string lastPath = "";
             foreach (var node in search)
