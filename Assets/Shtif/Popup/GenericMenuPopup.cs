@@ -178,7 +178,7 @@ namespace Shtif
         public override void OnGUI(Rect p_rect)
         {
             if (Event.current.type == EventType.Layout)
-                _useScroll = _contentHeight > maxHeight;
+                _useScroll = _contentHeight > maxHeight || (!resizeToContent && _contentHeight > height);
             
             _contentHeight = 0;
             GUIStyle style = new GUIStyle();

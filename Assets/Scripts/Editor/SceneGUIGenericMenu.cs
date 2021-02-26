@@ -26,17 +26,18 @@ namespace Editor
             {
                 if (Event.current.type == EventType.MouseDown)
                 {
-                    var menu = GetExampleMenu();
+                    //var menu = GetExampleMenu();
                     //menu.ShowAsContext();
-                    GenericMenuPopup.Show(menu, "", Event.current.mousePosition);
+                    //GenericMenuPopup.Show(menu, "", Event.current.mousePosition);
                     
-                    //var menu = GetTypeMenu(typeof(Component));
-                    // var popup = GenericMenuPopup.Get(GetTypeMenu(typeof(Component)), "Unity Type");
-                    // popup.width = 220;
-                    // popup.showTooltip = true;
-                    // popup.resizeToContent = true;
-                    // popup.height = 60;
-                    // popup.Show(Event.current.mousePosition);
+                    var menu = GetTypeMenu(typeof(Component));
+                    //menu.ShowAsContext();
+                    var popup = GenericMenuPopup.Get(GetTypeMenu(typeof(Component)), "");
+                    popup.width = 220;
+                    popup.showSearch = false;
+                    popup.showTooltip = false;
+                    popup.resizeToContent = true;
+                    popup.Show(Event.current.mousePosition);
                 }
             }
         }
@@ -50,7 +51,7 @@ namespace Editor
             GenericMenu menu = new GenericMenu();
             menu.AddItem(new GUIContent("Edit"), false, Callback, 1);
             menu.AddItem(new GUIContent("File"), false, Callback, 2);
-            menu.AddItem(new GUIContent("Submenu/Import"), false, Callback, 3);
+            menu.AddItem(new GUIContent("Submenu/Import"), true, Callback, 3);
             menu.AddItem(new GUIContent("Submenu/Export"), false, Callback, 4);
             menu.AddItem(new GUIContent("About"), false, Callback, 5);
 
