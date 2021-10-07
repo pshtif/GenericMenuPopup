@@ -452,9 +452,8 @@ namespace Shtif
             if (p_menu == null)
                 return rootNode;
             
-            var menuItemsField = p_menu.GetType().GetField("menuItems", BindingFlags.Instance | BindingFlags.NonPublic);
-            var menuItems = menuItemsField.GetValue(p_menu) as ArrayList;
-            
+            var menuItems = TryGetMenuItems("menuItems") ?? TryGetMenuItems("m_MenuItems");
+
             foreach (var menuItem in menuItems)
             {
                 var menuItemType = menuItem.GetType();
@@ -486,6 +485,12 @@ namespace Shtif
             }
 
             return rootNode;
+
+            IEnumerable TryGetMenuItems(string fieldName)
+            {
+                var menuItemsField = p_menu.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+                return menuItemsField?.GetValue(p_menu) as IEnumerable;
+            }
         }
         
         public override void OnOpen() 
