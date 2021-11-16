@@ -5,7 +5,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Shtif;
+using BinaryEgo.Editor.UI;
+using BinaryEgo.UI;
 
 namespace Editor
 {

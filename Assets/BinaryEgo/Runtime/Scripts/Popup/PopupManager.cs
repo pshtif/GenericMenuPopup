@@ -5,7 +5,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Shtif
+namespace BinaryEgo.UI
 {
     public class PopupManager
     {

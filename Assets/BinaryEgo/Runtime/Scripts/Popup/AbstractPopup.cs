@@ -4,7 +4,7 @@
 
 using UnityEngine;
 
-namespace Shtif
+namespace BinaryEgo.UI
 {
     public abstract class AbstractPopup
     {

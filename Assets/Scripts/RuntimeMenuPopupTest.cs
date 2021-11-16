@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Shtif;
+using BinaryEgo.UI;
 using UnityEngine;
 
 public class RuntimeMenuPopupTest : MonoBehaviour

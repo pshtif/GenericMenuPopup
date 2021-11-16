@@ -2,44 +2,42 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-using System.Collections;
+using System;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
-using UnityEditor;
 
-namespace Shtif
+namespace BinaryEgo.UI
 {
-    public class MenuItemNode
+    public class MenuItemNode2
     {
         public GUIContent content;
-        public GenericMenu.MenuFunction func;
-        public GenericMenu.MenuFunction2 func2;
+        public Action func;
+        public Action<object> func2;
         public object userData;
         public bool separator;
         public bool on;
 
         public string name { get; }
-        public MenuItemNode parent { get; }
+        public MenuItemNode2 parent { get; }
         
-        public List<MenuItemNode> Nodes { get; private set; }
+        public List<MenuItemNode2> Nodes { get; private set; }
 
-        public MenuItemNode(string p_name = "", MenuItemNode p_parent = null)
+        public MenuItemNode2(string p_name = "", MenuItemNode2 p_parent = null)
         {
             name = p_name;
             parent = p_parent;
-            Nodes = new List<MenuItemNode>();
+            Nodes = new List<MenuItemNode2>();
         }
 
-        public MenuItemNode CreateNode(string p_name)
+        public MenuItemNode2 CreateNode(string p_name)
         {
-            var node = new MenuItemNode(p_name, this);
+            var node = new MenuItemNode2(p_name, this);
             Nodes.Add(node);
             return node;
         }
 
         // TODO Optimize
-        public MenuItemNode GetOrCreateNode(string p_name)
+        public MenuItemNode2 GetOrCreateNode(string p_name)
         {
             var node = Nodes.Find(n => n.name == p_name);
             if (node == null)
@@ -50,10 +48,10 @@ namespace Shtif
             return node;
         }
 
-        public List<MenuItemNode> Search(string p_search)
+        public List<MenuItemNode2> Search(string p_search)
         {
             p_search = p_search.ToLower();
-            List<MenuItemNode> result = new List<MenuItemNode>();
+            List<MenuItemNode2> result = new List<MenuItemNode2>();
             
             foreach (var node in Nodes)
             {
@@ -86,17 +84,17 @@ namespace Shtif
         }
     }
     
-    public class GenericMenuPopup : PopupWindowContent
+    public class MenuPopup : AbstractPopup
     {
-        public static GenericMenuPopup Get(GenericMenu p_menu, string p_title)
+        public static MenuPopup Get(RuntimeGenericMenu p_menu, string p_title)
         {
-            var popup = new GenericMenuPopup(p_menu, p_title);
+            var popup = new MenuPopup(p_menu, p_title);
             return popup;
         }
         
-        public static GenericMenuPopup Show(GenericMenu p_menu, string p_title, Vector2 p_position) {
-            var popup = new GenericMenuPopup(p_menu, p_title);
-            PopupWindow.Show(new Rect(p_position.x, p_position.y, 0, 0), popup);
+        public static MenuPopup Show(RuntimeGenericMenu p_menu, string p_title, Vector2 p_position) {
+            var popup = new MenuPopup(p_menu, p_title);
+            AbstractPopup.Show(new Rect(p_position.x, p_position.y, 0, 0), popup);
             return popup;
         }
 
@@ -107,9 +105,10 @@ namespace Shtif
             {
                 if (_backStyle == null)
                 {
-                    _backStyle = new GUIStyle(GUI.skin.button);
+                    _backStyle = new GUIStyle();
                     _backStyle.alignment = TextAnchor.MiddleLeft;
-                    _backStyle.hover.background = Texture2D.grayTexture;
+                    _backStyle.normal.background = Texture2D.grayTexture;
+                    _backStyle.hover.background = Texture2D.whiteTexture;
                     _backStyle.normal.textColor = Color.black;
                 }
 
@@ -135,13 +134,14 @@ namespace Shtif
         
         private string _title;
         private Vector2 _scrollPosition;
-        private MenuItemNode _rootNode;
-        private MenuItemNode _currentNode;
-        private MenuItemNode _hoverNode;
+        private MenuItemNode2 _rootNode;
+        private MenuItemNode2 _currentNode;
+        private MenuItemNode2 _hoverNode;
         private string _search;
         private bool _repaint = false;
         private int _contentHeight;
         private bool _useScroll;
+        private GUISkin _skin;
         
         public int width = 200;
         public int height = 200;
@@ -151,10 +151,12 @@ namespace Shtif
         public bool showSearch = true;
         public bool showTooltip = false;
         public bool showTitle = false;
-        
 
-        public GenericMenuPopup(GenericMenu p_menu, string p_title)
+
+        public MenuPopup(RuntimeGenericMenu p_menu, string p_title)
         {
+            _skin = Resources.Load<GUISkin>("MenuPopup");   
+            
             _title = p_title;
             showTitle = !string.IsNullOrWhiteSpace(_title);
             _currentNode = _rootNode = GenerateMenuItemNodeTree(p_menu);
@@ -167,8 +169,13 @@ namespace Shtif
 
         public override void OnGUI(Rect p_rect)
         {
+            GUI.skin = _skin;
+            
             if (Event.current.type == EventType.Layout)
                 _useScroll = _contentHeight > maxHeight || (!resizeToContent && _contentHeight > height);
+
+            Vector2 size = GetWindowSize();
+            p_rect = new Rect(rect.x, rect.y, size.x, size.y);
             
             _contentHeight = 0;
             GUIStyle style = new GUIStyle();
@@ -198,11 +205,7 @@ namespace Shtif
             {
                 height = Mathf.Min(_contentHeight, maxHeight);
             }
-#if UNITY_EDITOR
-            EditorGUI.FocusTextInControl("Search");
-#else
             GUI.FocusControl("Search");
-#endif
         }
 
         private void DrawTitle(Rect p_rect)
@@ -241,7 +244,7 @@ namespace Shtif
             GUILayout.BeginArea(p_rect);
             if (_useScroll) 
             {
-                _scrollPosition = GUILayout.BeginScrollView(_scrollPosition, GUIStyle.none, GUI.skin.verticalScrollbar);
+                _scrollPosition = GUILayout.BeginScrollView(_scrollPosition, GUIStyle.none, _skin.verticalScrollbar);
             }
 
             GUILayout.BeginVertical();
@@ -266,7 +269,7 @@ namespace Shtif
         
         private void DrawNodeSearch(Rect p_rect)
         {
-            List<MenuItemNode> search = _rootNode.Search(_search);
+            List<MenuItemNode2> search = _rootNode.Search(_search);
             search.Sort((n1, n2) =>
             {
                 string p1 = n1.parent.GetPath();
@@ -296,19 +299,21 @@ namespace Shtif
 
                 if (showOnStatus)
                 {
-                    style = new GUIStyle("box");
+                    style = new GUIStyle();
                     style.normal.background = Texture2D.whiteTexture;
                     GUI.color = node.on ? new Color(0, .6f, .8f) : new Color(.2f, .2f, .2f);
                     GUILayout.Box("", style, GUILayout.Width(14), GUILayout.Height(14));
                 }
 
                 GUI.color = _hoverNode == node ? Color.white : Color.white;
-                GUILayout.Label(node.name, GUILayout.Height(20));
+                style = new GUIStyle();
+                style.normal.textColor = Color.white;
+                GUILayout.Label(node.name, style, GUILayout.Height(20));
                 
                 GUILayout.EndHorizontal();
                 
                 var nodeRect = GUILayoutUtility.GetLastRect();
-                if (Event.current.isMouse)
+                if (Event.current.type == EventType.Repaint || Event.current.isMouse)
                 {
                     if (nodeRect.Contains(Event.current.mousePosition))
                     {
@@ -322,7 +327,7 @@ namespace Shtif
                             else
                             {
                                 node.Execute();
-                                base.editorWindow.Close();
+                                Close();
                             }
 
                             break;
@@ -376,21 +381,21 @@ namespace Shtif
 
                 if (showOnStatus)
                 {
-                    style = new GUIStyle("box");
+                    style = new GUIStyle();
                     style.normal.background = Texture2D.whiteTexture;
                     GUI.color = node.on ? new Color(0, .6f, .8f, .5f) : new Color(.2f, .2f, .2f, .2f);
                     GUILayout.Box("", style, GUILayout.Width(14), GUILayout.Height(14));
                 }
 
                 GUI.color = _hoverNode == node ? Color.white : Color.white;
-                style = new GUIStyle("label");
+                style = new GUIStyle();
+                style.normal.textColor = Color.white;
                 style.fontStyle = node.Nodes.Count > 0 ? FontStyle.Bold : FontStyle.Normal;
                 GUILayout.Label(node.name, style, GUILayout.Height(20));
                 
                 GUILayout.EndHorizontal();
-                
                 var nodeRect = GUILayoutUtility.GetLastRect();
-                if (Event.current.isMouse)
+                if (Event.current.type == EventType.Repaint || Event.current.isMouse)
                 {
                     if (nodeRect.Contains(Event.current.mousePosition))
                     {
@@ -404,7 +409,7 @@ namespace Shtif
                             else
                             {
                                 node.Execute();
-                                base.editorWindow.Close();
+                                Close();
                             }
 
                             break;
@@ -431,35 +436,19 @@ namespace Shtif
             }
         }
 
-        // TODO Possible type caching? 
-        public static MenuItemNode GenerateMenuItemNodeTree(GenericMenu p_menu)
+        public static MenuItemNode2 GenerateMenuItemNodeTree(RuntimeGenericMenu p_menu)
         {
-            MenuItemNode rootNode = new MenuItemNode();
+            MenuItemNode2 rootNode = new MenuItemNode2();
             if (p_menu == null)
                 return rootNode;
-            
-            
-            var menuItemsField = p_menu.GetType().GetField("menuItems", BindingFlags.Instance | BindingFlags.NonPublic);
 
-            if (menuItemsField == null)
+            foreach (var menuItem in p_menu.Items)
             {
-                menuItemsField = p_menu.GetType().GetField("m_MenuItems", BindingFlags.Instance | BindingFlags.NonPublic);
-            }
-            
-            if (menuItemsField == null)
-                return rootNode;
-            
-            var menuItems = menuItemsField.GetValue(p_menu) as IEnumerable;
-            
-            foreach (var menuItem in menuItems)
-            {
-                var menuItemType = menuItem.GetType();
-                GUIContent content = (GUIContent)menuItemType.GetField("content").GetValue(menuItem);
+                GUIContent content = menuItem.content;
                 
-                bool separator = (bool)menuItemType.GetField("separator").GetValue(menuItem);
                 string path = content.text;
                 string[] splitPath = path.Split('/');
-                MenuItemNode currentNode = rootNode;
+                MenuItemNode2 currentNode = rootNode;
                 for (int i = 0; i < splitPath.Length; i++)
                 {
                     currentNode = (i < splitPath.Length - 1)
@@ -467,17 +456,17 @@ namespace Shtif
                         : currentNode.CreateNode(splitPath[i]);
                 }
 
-                if (separator)
+                if (menuItem.separator)
                 {
                     currentNode.separator = true;
                 }
                 else
                 {
                     currentNode.content = content;
-                    currentNode.func = (GenericMenu.MenuFunction) menuItemType.GetField("func").GetValue(menuItem);
-                    currentNode.func2 = (GenericMenu.MenuFunction2) menuItemType.GetField("func2").GetValue(menuItem);
-                    currentNode.userData = menuItemType.GetField("userData").GetValue(menuItem);
-                    currentNode.on = (bool) menuItemType.GetField("on").GetValue(menuItem);
+                    currentNode.func = menuItem.callback1;
+                    currentNode.func2 = menuItem.callback2;
+                    currentNode.userData = menuItem.data;
+                    currentNode.on = menuItem.state;
                 }
             }
 
@@ -486,31 +475,12 @@ namespace Shtif
         
         public void Show(float p_x, float p_y)
         {
-            PopupWindow.Show(new Rect(p_x, p_y, 0, 0), this);
+            AbstractPopup.Show(new Rect(p_x, p_y, 0, 0), this);
         }
         
         public void Show(Vector2 p_position)
         {
-            PopupWindow.Show(new Rect(p_position.x, p_position.y, 0, 0), this);
-        }
-        
-        void OnEditorUpdate() {
-            if (_repaint)
-            {
-                _repaint = false;
-                base.editorWindow.Repaint();
-            }
-        }
-        
-        public override void OnOpen() 
-        {
-            EditorApplication.update -= OnEditorUpdate;
-            EditorApplication.update += OnEditorUpdate;
-        }
-        
-        public override void OnClose() 
-        {
-            EditorApplication.update -= OnEditorUpdate;
+            AbstractPopup.Show(new Rect(p_position.x, p_position.y, 0, 0), this);
         }
     }
 }
