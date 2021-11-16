@@ -437,20 +437,9 @@ namespace BinaryEgo.Editor.UI
             MenuItemNode rootNode = new MenuItemNode();
             if (p_menu == null)
                 return rootNode;
-            
-            
-            var menuItemsField = p_menu.GetType().GetField("menuItems", BindingFlags.Instance | BindingFlags.NonPublic);
 
-            if (menuItemsField == null)
-            {
-                menuItemsField = p_menu.GetType().GetField("m_MenuItems", BindingFlags.Instance | BindingFlags.NonPublic);
-            }
-            
-            if (menuItemsField == null)
-                return rootNode;
+            var menuItems = TryGetMenuItems("menuItems") ?? TryGetMenuItems("m_MenuItems");
 
-            var menuItems = menuItemsField.GetValue(p_menu) as IEnumerable;
-            
             foreach (var menuItem in menuItems)
             {
                 var menuItemType = menuItem.GetType();
@@ -482,6 +471,12 @@ namespace BinaryEgo.Editor.UI
             }
 
             return rootNode;
+
+            IEnumerable TryGetMenuItems(string fieldName)
+            {
+                var menuItemsField = p_menu.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+                return menuItemsField?.GetValue(p_menu) as IEnumerable;
+            }
         }
         
         public void Show(float p_x, float p_y)
