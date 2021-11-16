@@ -5,8 +5,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using UnityEditor;
 using UnityEngine;
+using UnityEditor;
 
 namespace Shtif
 {
@@ -165,16 +165,6 @@ namespace Shtif
             return new Vector2(width, height);
         }
 
-        public void Show(float p_x, float p_y)
-        {
-            PopupWindow.Show(new Rect(p_x, p_y, 0, 0), this);
-        }
-        
-        public void Show(Vector2 p_position)
-        {
-            PopupWindow.Show(new Rect(p_position.x, p_position.y, 0, 0), this);
-        }
-
         public override void OnGUI(Rect p_rect)
         {
             if (Event.current.type == EventType.Layout)
@@ -208,7 +198,11 @@ namespace Shtif
             {
                 height = Mathf.Min(_contentHeight, maxHeight);
             }
+#if UNITY_EDITOR
             EditorGUI.FocusTextInControl("Search");
+#else
+            GUI.FocusControl("Search");
+#endif
         }
 
         private void DrawTitle(Rect p_rect)
@@ -247,7 +241,7 @@ namespace Shtif
             GUILayout.BeginArea(p_rect);
             if (_useScroll) 
             {
-                _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition, GUIStyle.none, GUI.skin.verticalScrollbar);
+                _scrollPosition = GUILayout.BeginScrollView(_scrollPosition, GUIStyle.none, GUI.skin.verticalScrollbar);
             }
 
             GUILayout.BeginVertical();
@@ -264,7 +258,7 @@ namespace Shtif
             GUILayout.EndVertical();
             if (_useScroll)
             {
-                EditorGUILayout.EndScrollView();
+                GUILayout.EndScrollView();
             }
 
             GUILayout.EndArea();
@@ -289,12 +283,12 @@ namespace Shtif
                 string nodePath = node.parent.GetPath();
                 if (nodePath != lastPath)
                 {
-                    _contentHeight += 21;
-                    GUILayout.Label(nodePath);
+                    _contentHeight += 20;
+                    GUILayout.Label(nodePath, GUILayout.Height(20));
                     lastPath = nodePath;
                 }
 
-                _contentHeight += 21;
+                _contentHeight += 20;
                 GUI.color = _hoverNode == node ? Color.white : Color.gray;
                 GUIStyle style = new GUIStyle();
                 style.normal.background = Texture2D.grayTexture;
@@ -309,7 +303,7 @@ namespace Shtif
                 }
 
                 GUI.color = _hoverNode == node ? Color.white : Color.white;
-                GUILayout.Label(node.name);
+                GUILayout.Label(node.name, GUILayout.Height(20));
                 
                 GUILayout.EndHorizontal();
                 
@@ -358,8 +352,8 @@ namespace Shtif
         {
             if (_currentNode != _rootNode)
             {
-                _contentHeight += 21;
-                if (GUILayout.Button(_currentNode.GetPath(), BackStyle))
+                _contentHeight += 20;
+                if (GUILayout.Button(_currentNode.GetPath(), BackStyle, GUILayout.Height(20)))
                 {
                     _currentNode = _currentNode.parent;
                 }
@@ -374,7 +368,7 @@ namespace Shtif
                     continue;
                 }
 
-                _contentHeight += 21;
+                _contentHeight += 20;
                 GUI.color = _hoverNode == node ? Color.white : Color.gray;
                 GUIStyle style = new GUIStyle();
                 style.normal.background = Texture2D.grayTexture;
@@ -391,7 +385,7 @@ namespace Shtif
                 GUI.color = _hoverNode == node ? Color.white : Color.white;
                 style = new GUIStyle("label");
                 style.fontStyle = node.Nodes.Count > 0 ? FontStyle.Bold : FontStyle.Normal;
-                GUILayout.Label(node.name, style);
+                GUILayout.Label(node.name, style, GUILayout.Height(20));
                 
                 GUILayout.EndHorizontal();
                 
@@ -436,14 +430,6 @@ namespace Shtif
                 }
             }
         }
-        
-        void OnEditorUpdate() {
-            if (_repaint)
-            {
-                _repaint = false;
-                base.editorWindow.Repaint();
-            }
-        }
 
         // TODO Possible type caching? 
         public static MenuItemNode GenerateMenuItemNodeTree(GenericMenu p_menu)
@@ -452,8 +438,18 @@ namespace Shtif
             if (p_menu == null)
                 return rootNode;
             
+            
             var menuItemsField = p_menu.GetType().GetField("menuItems", BindingFlags.Instance | BindingFlags.NonPublic);
-            var menuItems = menuItemsField.GetValue(p_menu) as ArrayList;
+
+            if (menuItemsField == null)
+            {
+                menuItemsField = p_menu.GetType().GetField("m_MenuItems", BindingFlags.Instance | BindingFlags.NonPublic);
+            }
+            
+            if (menuItemsField == null)
+                return rootNode;
+            
+            var menuItems = menuItemsField.GetValue(p_menu) as IEnumerable;
             
             foreach (var menuItem in menuItems)
             {
@@ -486,6 +482,24 @@ namespace Shtif
             }
 
             return rootNode;
+        }
+        
+        public void Show(float p_x, float p_y)
+        {
+            PopupWindow.Show(new Rect(p_x, p_y, 0, 0), this);
+        }
+        
+        public void Show(Vector2 p_position)
+        {
+            PopupWindow.Show(new Rect(p_position.x, p_position.y, 0, 0), this);
+        }
+        
+        void OnEditorUpdate() {
+            if (_repaint)
+            {
+                _repaint = false;
+                base.editorWindow.Repaint();
+            }
         }
         
         public override void OnOpen() 

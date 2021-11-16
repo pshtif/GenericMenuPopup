@@ -16,12 +16,23 @@ namespace Editor
     [InitializeOnLoad]
     public class SceneGUIGenericMenu : Editor {
  
-        static SceneGUIGenericMenu () {
+        static SceneGUIGenericMenu ()
+        {
             SceneView.duringSceneGui -= OnSceneGUI;
             SceneView.duringSceneGui += OnSceneGUI;
         }
+
+        static private bool _initialized = false;
  
         static void OnSceneGUI (SceneView sceneview) {
+            // if (!_initialized)
+            // {
+            //     var skin = new GUISkin(GUI.skin);
+            //     AssetDatabase.CreateAsset(skin, "Assets/test");
+            //     AssetDatabase.SaveAssets();
+            //     _initialized = true;
+            // }
+            
             if (Event.current.button == 1)
             {
                 if (Event.current.type == EventType.MouseDown)
