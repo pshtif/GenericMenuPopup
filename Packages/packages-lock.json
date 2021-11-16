@@ -1,7 +1,11 @@
 {
   "dependencies": {
     "com.unity.collab-proxy": {
+<<<<<<< HEAD
       "version": "1.12.5",
+=======
+      "version": "1.10.2",
+>>>>>>> 04539f12db185a9f0eb00c40b1e34fbe679487aa
       "depth": 0,
       "source": "registry",
       "dependencies": {},
@@ -20,6 +24,15 @@
       "source": "registry",
       "dependencies": {
         "com.unity.test-framework": "1.1.1"
+      },
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.ide.visualstudio": {
+      "version": "2.0.11",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.test-framework": "1.1.9"
       },
       "url": "https://packages.unity.com"
     },
