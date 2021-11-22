@@ -6,6 +6,10 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 namespace BinaryEgo.UI
 {
     public class RuntimeGenericMenuItem
@@ -54,5 +58,33 @@ namespace BinaryEgo.UI
         {
             Items.Add(new RuntimeGenericMenuItem(new GUIContent(p_path), true, false, null));   
         }
+        
+#if UNITY_EDITOR
+        public void ShowAsEditorMenu()
+        {
+            GenericMenu editorMenu = new GenericMenu();
+
+            foreach (var item in Items)
+            {
+                if (!item.separator)
+                {
+                    if (item.callback2 != null)
+                    {
+                        editorMenu.AddItem(item.content, item.state, (data) => item.callback2.Invoke(data), item.data);   
+                    }
+                    else
+                    {
+                        editorMenu.AddItem(item.content, item.state, () => item.callback1.Invoke());
+                    }
+                }
+                else
+                {
+                    editorMenu.AddSeparator(item.content.text);
+                }
+            }
+            
+            editorMenu.ShowAsContext();
+        } 
+#endif
     }
 }
